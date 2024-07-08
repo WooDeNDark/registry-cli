@@ -1,5 +1,3 @@
-[![CircleCI](https://circleci.com/gh/andrey-pohilko/registry-cli/tree/master.svg?style=svg&circle-token=5216bf89763aec24bbcd6d15494ea32ffc53d66d)](https://circleci.com/gh/andrey-pohilko/registry-cli/tree/master)
-
 # registry-cli
 registry.py is a script for easy manipulation of docker-registry from command line (and from scripts)
 
@@ -16,7 +14,6 @@ registry.py is a script for easy manipulation of docker-registry from command li
 * [Important notes](#important-notes)
   * [garbage-collection in docker-registry](#garbage-collection-in-docker-registry)
   * [enable image deletion in docker-registry](#enable-image-deletion-in-docker-registry)
-* [Contribution](#contribution)
 
 ## Installation
 
@@ -188,31 +185,3 @@ For more on docker-registry configuration, read here:
 
 You may get `Error 405` message from script (`Functionality not supported`) when this option is not enabled.
 
-
-## Contribution
-You are very welcome to contribute to this script. Of course, when making changes,
-please include your changes into `test.py` and run tests to check that your changes
-do not break existing functionality.
-
-For tests to work, more libraries are needed
-```
-  pip install -r requirements-ci.txt
-```
-
-Running tests is as simple as
-```
-  python test.py
-```
-
-Test will print few error messages, like so
-```
-Testing started at 9:31 AM ...
-  tag digest not found: 400
-error 400
-```
-this is ok, because test simulates invalid inputs also.
-
-# Contact
-
-Please feel free to contact me at anoxis@gmail.com if you wish to add more functionality
-or want to contribute.

@@ -1,8 +1,8 @@
-FROM python:2.7-alpine
+FROM python:3.12.4-alpine
 
 ADD requirements-build.txt /
 
-RUN pip install -r /requirements-build.txt
+RUN pip3 install -r /requirements-build.txt
 
 ADD registry.py /
 
