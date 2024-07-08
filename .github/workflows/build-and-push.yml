@@ -44,5 +44,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: ${{ github.ref_name == 'master'}}
-          tags: ${{ steps.meta.outputs.tags }},WooDeNDark/registry-cli:latest
+          tags: ${{ steps.meta.outputs.tags }},ghcr.io/WooDeNDark/registry-cli:latest
           labels: ${{ steps.meta.outputs.labels }}
