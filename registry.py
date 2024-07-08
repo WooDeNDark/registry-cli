@@ -8,7 +8,7 @@
 
 import requests
 import ast
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import urllib3
 import json
 import pprint
 import base64
@@ -52,6 +52,7 @@ CONST_KEEP_LAST_VERSIONS = 10
 
 # print debug messages
 DEBUG = False
+
 
 # this class is created for testing
 class Requests:
@@ -111,7 +112,7 @@ class Requests:
 
             if DEBUG:
                 print('[debug][auth] token issued: ')
-                token_parsed=token.split('.')
+                token_parsed = token.split('.')
                 pprint.pprint(ast.literal_eval(decode_base64(token_parsed[0])))
                 pprint.pprint(ast.literal_eval(decode_base64(token_parsed[1])))
 
@@ -133,7 +134,7 @@ def natural_keys(text):
     def __atoi(text):
         return int(text) if text.isdigit() else text
 
-    return [__atoi(c) for c in re.split('(\d+)', text)]
+    return [__atoi(c) for c in re.split('(\\d+)', text)]
 
 
 def decode_base64(data):
@@ -143,11 +144,11 @@ def decode_base64(data):
     :returns: The decoded byte string.
 
     """
-    data = data.replace('Bearer ','')
+    data = data.replace('Bearer ', '')
     # print('[debug] base64 string to decode:\n{0}'.format(data))
     missing_padding = len(data) % 4
     if missing_padding != 0:
-        data += b'='* (4 - missing_padding)
+        data += b'=' * (4 - missing_padding)
     return base64.decodestring(data)
 
 
@@ -158,11 +159,12 @@ def get_error_explanation(context, error_code):
     key = "%s_%s" % (context, error_code)
 
     if key in error_list.keys():
-        return(error_list[key])
+        return error_list[key]
 
     return ''
 
-def get_auth_schemes(r,path):
+
+def get_auth_schemes(r, path):
     """ Returns list of auth schemes(lowcased) if www-authenticate: header exists
          returns None if no header found
          - www-authenticate: basic
@@ -171,7 +173,7 @@ def get_auth_schemes(r,path):
 
     if DEBUG: print("[debug][funcname]: get_auth_schemes()")
 
-    try_oauth = requests.head('{0}{1}'.format(r.hostname,path), verify=not r.no_validate_ssl)
+    try_oauth = requests.head('{0}{1}'.format(r.hostname, path), verify=not r.no_validate_ssl)
 
     if 'Www-Authenticate' in try_oauth.headers:
         oauth = www_authenticate.parse(try_oauth.headers['Www-Authenticate'])
@@ -183,12 +185,12 @@ def get_auth_schemes(r,path):
             print('[debug][docker] No Auth schemes found')
         return []
 
+
 # class to manipulate registry
 class Registry:
-
     # this is required for proper digest processing
     HEADERS = {"Accept":
-               "application/vnd.docker.distribution.manifest.v2+json"}
+                   "application/vnd.docker.distribution.manifest.v2+json"}
 
     def __init__(self):
         self.username = None
@@ -215,9 +217,8 @@ class Registry:
 
         return (None, None)
 
-
     @staticmethod
-    def _create(host, login, no_validate_ssl, digest_method = "HEAD"):
+    def _create(host, login, no_validate_ssl, digest_method="HEAD"):
         r = Registry()
 
         (r.username, r.password) = r.parse_login(login)
@@ -235,13 +236,12 @@ class Registry:
     def create(*args, **kw):
         return Registry._create(*args, **kw)
 
-
     def send(self, path, method="GET"):
         if 'bearer' in self.auth_schemes:
             (result, self.HEADERS['Authorization']) = self.http.bearer_request(
                 method, "{0}{1}".format(self.hostname, path),
                 auth=(('', '') if self.username in ["", None]
-                    else (self.username, self.password)),
+                      else (self.username, self.password)),
                 headers=self.HEADERS,
                 verify=not self.no_validate_ssl)
         else:
@@ -249,7 +249,7 @@ class Registry:
                 method, "{0}{1}".format(self.hostname, path),
                 headers=self.HEADERS,
                 auth=(None if self.username == ""
-                    else (self.username, self.password)),
+                      else (self.username, self.password)),
                 verify=not self.no_validate_ssl)
 
         # except Exception as error:
@@ -315,8 +315,9 @@ class Registry:
         tag_digest = self.get_tag_digest(image_name, tag)
 
         if tag_digest in tag_digests_to_ignore:
-            print("Digest {0} for tag {1} is referenced by another tag or has already been deleted and will be ignored".format(
-                tag_digest, tag))
+            print(
+                "Digest {0} for tag {1} is referenced by another tag or has already been deleted and will be ignored".format(
+                    tag_digest, tag))
             return True
 
         if tag_digest is None:
@@ -334,7 +335,6 @@ class Registry:
 
         print("done")
         return True
-
 
     def list_tag_layers(self, image_name, tag):
         layers_result = self.send("/v2/{0}/manifests/{1}".format(
@@ -375,19 +375,24 @@ class Registry:
 
         if 'bearer' in self.auth_schemes:
             container_header['Authorization'] = self.HEADERS['Authorization']
-            (response, self.HEADERS['Authorization']) = self.http.bearer_request("GET", "{0}{1}".format(self.hostname, "/v2/{0}/blobs/{1}".format(
-                image_name, image_config['digest'])),
-                auth=(('', '') if self.username in ["", None]
-                    else (self.username, self.password)),
-                headers=container_header,
-                verify=not self.no_validate_ssl)
+            (response, self.HEADERS['Authorization']) = self.http.bearer_request("GET", "{0}{1}".format(self.hostname,
+                                                                                                        "/v2/{0}/blobs/{1}".format(
+                                                                                                            image_name,
+                                                                                                            image_config[
+                                                                                                                'digest'])),
+                                                                                 auth=(('', '') if self.username in ["",
+                                                                                                                     None]
+                                                                                       else (
+                                                                                     self.username, self.password)),
+                                                                                 headers=container_header,
+                                                                                 verify=not self.no_validate_ssl)
         else:
             response = self.http.request("GET", "{0}{1}".format(self.hostname, "/v2/{0}/blobs/{1}".format(
                 image_name, image_config['digest'])),
-                headers=container_header,
-                auth=(None if self.username == ""
-                    else (self.username, self.password)),
-                verify=not self.no_validate_ssl)
+                                         headers=container_header,
+                                         auth=(None if self.username == ""
+                                               else (self.username, self.password)),
+                                         verify=not self.no_validate_ssl)
 
         if str(response.status_code)[0] == '2':
             self.last_error = None
@@ -554,10 +559,10 @@ for more detail on garbage collection read here:
         metavar="HEAD|GET"
     )
     parser.add_argument(
-         '--auth-method',
-         help=('Use POST or GET to get JWT tokens'),
-         default='POST',
-         metavar="POST|GET"
+        '--auth-method',
+        help=('Use POST or GET to get JWT tokens'),
+        default='POST',
+        metavar="POST|GET"
     )
     parser.add_argument(
         '--order-by-date',
@@ -577,7 +582,6 @@ for more detail on garbage collection read here:
 
 def delete_tags(
         registry, image_name, dry_run, tags_to_delete, tags_to_keep):
-
     keep_tag_digests = []
 
     if tags_to_keep:
@@ -609,6 +613,7 @@ def delete_tags(
         task.get()
     p.close()
     p.join()
+
 
 # deleting layers is disabled because
 # it also deletes shared layers
@@ -757,7 +762,7 @@ def main_loop(args):
     keep_last_versions = int(args.num)
 
     if args.no_validate_ssl:
-        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     if args.read_password:
         if args.login is None:
@@ -789,7 +794,7 @@ def main_loop(args):
     registry = Registry.create(args.host, args.login, args.no_validate_ssl,
                                args.digest_method)
 
-    registry.auth_schemes = get_auth_schemes(registry,'/v2/_catalog')
+    registry.auth_schemes = get_auth_schemes(registry, '/v2/_catalog')
 
     if args.delete:
         print("Will delete all but {0} last tags".format(keep_last_versions))
@@ -861,7 +866,7 @@ def main_loop(args):
                     tag for tag in tags_list if tag not in tags_list_to_delete]
                 keep_tags.extend(tags_list_to_keep)
 
-            keep_tags.sort() # Make order deterministic for testing
+            keep_tags.sort()  # Make order deterministic for testing
             delete_tags(
                 registry, image_name, args.dry_run,
                 tags_list_to_delete, keep_tags)
@@ -870,6 +875,7 @@ def main_loop(args):
         if args.delete_by_hours:
             delete_tags_by_age(registry, image_name, args.dry_run,
                                args.delete_by_hours, keep_tags)
+
 
 if __name__ == "__main__":
     args = parse_args()
